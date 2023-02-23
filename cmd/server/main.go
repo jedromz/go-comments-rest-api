@@ -1,28 +1,45 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	database "go-comments-rest-api/db"
+	log "github.com/sirupsen/logrus"
+	"go-comments-rest-api/internal/comment"
+	database "go-comments-rest-api/internal/db"
+	transportHTTP "go-comments-rest-api/internal/transport/http"
 )
 
 // Run - responsible for the instantiation
 // and startup of our application
+// Run - sets up our application
+// Run - sets up our application
 func Run() error {
-	fmt.Println("starting our application")
-	db, err := database.NewDatabase()
+	log.SetFormatter(&log.JSONFormatter{})
+	log.Info("Setting Up Our APP")
+
+	var err error
+	store, err := database.NewDatabase()
 	if err != nil {
-		fmt.Println("failed to connect to the database")
+		log.Error("failed to setup connection to the database")
 		return err
 	}
-	if err := db.Ping(context.Background()); err != nil {
+	err = store.MigrateDB()
+	if err != nil {
+		log.Error("failed to setup database")
 		return err
 	}
+
+	commentService := comment.NewService(store)
+	handler := transportHTTP.NewHandler(commentService)
+
+	if err := handler.Serve(); err != nil {
+		log.Error("failed to gracefully serve our application")
+		return err
+	}
+
 	return nil
 }
-
 func main() {
 	if err := Run(); err != nil {
-		fmt.Println(err)
+		log.Error(err)
+		log.Fatal("Error starting up our REST API")
 	}
 }
