@@ -16,7 +16,7 @@ type Database struct {
 // NewDatabase - returns a pointer to a database object
 func NewDatabase() (*Database, error) {
 	log.Info("Setting up new database connection")
-
+	log.Info(os.Getenv("DB_HOST")
 	connectionString := fmt.Sprintf(
 		"host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
 		os.Getenv("DB_HOST"),
